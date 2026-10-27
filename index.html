@@ -1,0 +1,785 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>A4 Placement Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: drafting desk — tool rail on top, element inspector left, A4 sheet on a cutting mat centre, Python code sheet right */
+:root{
+  --bg:#e8ebe7; --panel:#f7f8f6; --field:#ffffff; --ink:#18201c; --muted:#5a6761; --line:#d2d9d4;
+  --mat:#2e4943; --mat-line:rgba(255,255,255,.07);
+  --ruler:#f1ecdc; --ruler-ink:#3b3a32;
+  --accent:#d9561f; --accent-ink:#ffffff; --accent-soft:rgba(217,86,31,.12);
+  --code-bg:#16201c; --code-ink:#dbe5df; --t-s:#e9b46b; --t-n:#8fd3b9; --t-k:#f28d60; --t-c:#7d8e87;
+  --paper:#ffffff; --ph:#eef2f0; --ph-line:#9aa9a2; --ph-x:#c6d0cb; --ph-ink:#5b6963; --grid-a:#d5e0ee; --grid-b:#b9c9df;
+  --ui:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1311; --panel:#151c19; --field:#0f1513; --ink:#e2e9e5; --muted:#8f9d96; --line:#28332e;
+  --mat:#1a2b27; --mat-line:rgba(255,255,255,.05); --ruler:#dcd6c3; --ruler-ink:#2f2e27;
+  --accent:#ef7841; --accent-ink:#1a0d06; --accent-soft:rgba(239,120,65,.16); --code-bg:#0c110f; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1311; --panel:#151c19; --field:#0f1513; --ink:#e2e9e5; --muted:#8f9d96; --line:#28332e;
+  --mat:#1a2b27; --mat-line:rgba(255,255,255,.05); --ruler:#dcd6c3; --ruler-ink:#2f2e27;
+  --accent:#ef7841; --accent-ink:#1a0d06; --accent-soft:rgba(239,120,65,.16); --code-bg:#0c110f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding-block:12px 0}
+.brand{display:flex;align-items:baseline;gap:9px;margin-right:auto}
+.brand b{font-size:18px;letter-spacing:-.015em}
+.brand span{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-right:2px}
+.btn{height:32px;padding:0 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6}
+.btn.warn{color:var(--accent);border-color:var(--accent)}
+.ctl{height:32px;border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:0 8px;font-size:13px}
+.chkl{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;height:32px;padding:0 4px}
+
+.app{flex:1;min-height:0;display:grid;grid-template-columns:272px minmax(0,1fr) minmax(330px,440px);gap:12px;padding-block:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.panel h2{margin:0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+  padding:11px 14px 8px;display:flex;justify-content:space-between}
+
+.list-sec{border-bottom:1px solid var(--line);max-height:40%;display:flex;flex-direction:column;min-height:0}
+.list{overflow:auto;padding:0 6px 8px;display:flex;flex-direction:column;gap:1px}
+.item{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:5px 8px;border-radius:6px;border:0;background:none;cursor:pointer}
+.item:hover{background:var(--accent-soft)}
+.item.on{background:var(--accent);color:var(--accent-ink)}
+.item.on .tag,.item.on .xy{color:inherit;border-color:currentColor}
+.tag{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;padding:1px 0;border:1px solid var(--line);border-radius:4px;color:var(--muted);width:42px;text-align:center;flex:none}
+.item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.item .xy{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.props-sec{flex:1;min-height:0;overflow:auto;padding-bottom:14px}
+#props{padding:0 14px}
+.empty{color:var(--muted);font-size:13px;line-height:1.5}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px 8px}
+.f{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;min-width:0}
+.f.wide{grid-column:1/-1}
+.f input,.f select,.f textarea{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);background:var(--field);
+  border:1px solid var(--line);border-radius:6px;height:30px;padding:0 8px;width:100%;min-width:0}
+.f input[type=number]{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.f input[type=color]{padding:2px 3px;cursor:pointer}
+.f input[readonly]{color:var(--muted);background:transparent}
+.f textarea{height:auto;min-height:74px;padding:6px 8px;font-family:var(--mono);font-size:12px;line-height:1.45;resize:vertical;white-space:pre;overflow:auto}
+.f.chk{flex-direction:row;align-items:center;gap:7px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--ink);height:30px;align-self:end}
+.f.chk input{width:16px;height:16px}
+.sub{grid-column:1/-1;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:6px;padding-top:10px;border-top:1px dashed var(--line)}
+.readout{margin-top:12px;font-family:var(--mono);font-size:11.5px;line-height:1.6;background:var(--bg);border-radius:7px;padding:8px 10px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.readout b{color:var(--ink);font-weight:600}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.acts .btn{height:28px;font-size:12px;padding:0 9px}
+
+.stagewrap{background:var(--mat);border-color:transparent}
+.stagebar,.statusbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;color:#e6efe9;font-size:12px}
+.statusbar{font-family:var(--mono);font-size:11.5px;justify-content:space-between;color:#cfdbd5;font-variant-numeric:tabular-nums}
+.statusbar .hint{color:#94aaa1}
+.zbtn{height:28px;min-width:28px;padding:0 8px;border-radius:6px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#eef4f0;cursor:pointer;font-size:12px}
+.zbtn:hover{background:rgba(255,255,255,.14)}
+#zlab{font-family:var(--mono);min-width:44px;text-align:center}
+.legend{margin-left:auto;font-family:var(--mono);font-size:11px;color:#a9bdb4}
+.stage{flex:1;min-height:0;overflow:auto;background-image:linear-gradient(var(--mat-line) 1px,transparent 1px),linear-gradient(90deg,var(--mat-line) 1px,transparent 1px);background-size:20px 20px}
+.stage-inner{display:flex;min-width:100%;min-height:100%;width:max-content;padding:10px}
+#svg{display:block;margin:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+
+.ruler{fill:var(--ruler)} .tick{stroke:var(--ruler-ink);stroke-width:.13} .rlab{fill:var(--ruler-ink);font-family:var(--mono);font-size:2.3px}
+.shadow{fill:rgba(0,0,0,.32)} .paper{fill:var(--paper)}
+.marg{fill:none;stroke:var(--accent);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:5 4;opacity:.6}
+.el{cursor:move}
+.hit{fill:transparent;stroke:none}
+.el:hover .hit{stroke:var(--accent);stroke-opacity:.55;stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:3 2}
+.ph{fill:var(--ph);stroke:var(--ph-line);stroke-width:.25;stroke-dasharray:1 .7} .phx{stroke:var(--ph-x);stroke-width:.2} .phl{fill:var(--ph-ink);font-family:var(--mono)}
+.selr{fill:none;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.hdl{fill:#fff;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.dimbg{fill:var(--accent)} .dim{fill:var(--accent-ink);font-family:var(--mono)}
+.curl{stroke:var(--accent);stroke-width:1.2;vector-effect:non-scaling-stroke}
+
+.tabs{display:flex;align-items:center;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:8px 11px 9px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-radius:6px 6px 0 0}
+.tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.tabs .btn{margin-left:auto;height:28px;font-size:12px;margin-bottom:5px}
+.codebody{flex:1;min-height:0;overflow:auto;background:var(--code-bg);color:var(--code-ink)}
+.codebody pre{margin:0;padding:14px 16px 24px;font:12.5px/1.6 var(--mono);white-space:pre;tab-size:4}
+.t-s{color:var(--t-s)} .t-n{color:var(--t-n)} .t-k{color:var(--t-k)} .t-c{color:var(--t-c);font-style:italic}
+.codebody.xy{background:var(--panel);color:var(--ink);padding:12px 14px 20px}
+.xyt{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.xyt table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.xyt th,.xyt td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.xyt th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;background:var(--bg)}
+.xyt td{font-family:var(--mono)}
+.xyt td:first-child,.xyt th:first-child{text-align:left;font-family:var(--ui)}
+.xyt tr.on td{background:var(--accent-soft)}
+.xyt tr{cursor:pointer}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5;margin:12px 0 8px;max-width:60ch}
+#json{width:100%;min-height:200px;font:11.5px/1.5 var(--mono);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+#jmsg{font-size:12px;color:var(--muted)}
+
+@media (max-width:1180px){
+  html,body{height:auto}
+  .app{grid-template-columns:260px minmax(0,1fr)}
+  .codewrap{grid-column:1/-1;height:560px}
+  .side,.stagewrap{height:80vh;min-height:540px}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .stagewrap{order:-1;height:72vh;min-height:440px}
+  .side{height:auto;min-height:0}
+  .list-sec{max-height:220px}
+  .legend{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand"><b>A4 Placement Studio</b><span>210 × 297 mm → Python</span></div>
+  <div class="group" aria-label="Add element">
+    <span class="lbl">Add</span>
+    <button class="btn" data-add="text"><svg viewBox="0 0 16 16"><path d="M3 3h10M8 3v10"/></svg>Text</button>
+    <button class="btn" data-add="box"><svg viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="9" rx="1"/></svg>Box</button>
+    <button class="btn" data-add="hline"><svg viewBox="0 0 16 16"><path d="M2 8h12"/></svg>H-line</button>
+    <button class="btn" data-add="vline"><svg viewBox="0 0 16 16"><path d="M8 2v12"/></svg>V-line</button>
+    <button class="btn" data-add="table"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10"/><path d="M2 6h12M6 3v10M10 3v10"/></svg>Table</button>
+    <button class="btn" data-add="image"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10"/><path d="M2 11l4-4 3 3 2-2 3 3"/></svg>Image</button>
+    <button class="btn" data-add="qr"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5"/><rect x="9" y="2" width="5" height="5"/><rect x="2" y="9" width="5" height="5"/><path d="M10 10h1v1h-1zM12.5 12.5h1v1h-1z"/></svg>QR</button>
+  </div>
+  <div class="group" aria-label="Page settings">
+    <span class="lbl">Page</span>
+    <select id="orient" class="ctl" aria-label="Orientation"><option value="P">Portrait</option><option value="L">Landscape</option></select>
+    <select id="margin" class="ctl" aria-label="Margin guide"><option value="0">No margin guide</option><option value="10">10 mm margin</option><option value="15">15 mm margin</option><option value="20">20 mm margin</option><option value="25">25 mm margin</option></select>
+    <select id="snap" class="ctl" aria-label="Snap"><option value="0">No snap</option><option value="0.5">Snap 0.5 mm</option><option value="1">Snap 1 mm</option><option value="2.5">Snap 2.5 mm</option><option value="5">Snap 5 mm</option></select>
+    <label class="chkl"><input type="checkbox" id="grid"> Grid</label>
+  </div>
+  <div class="group">
+    <button class="btn" id="undo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 16 16"><path d="M5 4L2 7l3 3M2 7h8a4 4 0 010 8H7"/></svg>Undo</button>
+    <button class="btn" id="sample">Load invoice sample</button>
+    <button class="btn" id="clear">Clear page</button>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="panel side">
+    <section class="list-sec"><h2>Elements <span id="count"></span></h2><div id="list" class="list"></div></section>
+    <section class="props-sec"><h2>Properties</h2><div id="props"></div></section>
+  </aside>
+
+  <section class="panel stagewrap">
+    <div class="stagebar">
+      <button class="zbtn" id="zout" aria-label="Zoom out">−</button>
+      <span id="zlab">100%</span>
+      <button class="zbtn" id="zin" aria-label="Zoom in">+</button>
+      <button class="zbtn" id="zfit">Fit</button>
+      <span class="legend">origin ⌜ top-left · units mm</span>
+    </div>
+    <div id="stage" class="stage"><div class="stage-inner">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="g5" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="var(--grid-a)" stroke-width=".12"/></pattern>
+          <pattern id="g10" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="url(#g5)"/><path d="M10 0H0V10" fill="none" stroke="var(--grid-b)" stroke-width=".18"/></pattern>
+        </defs>
+        <g id="gStatic"></g><g id="gEls"></g><g id="gOvl"></g><g id="gCur" pointer-events="none"></g>
+      </svg>
+    </div></div>
+    <div class="statusbar"><span id="cursor">Point at the page to read coordinates</span><span class="hint">Drag to move · handles resize · arrows nudge · Alt-drag ignores snap</span></div>
+  </section>
+
+  <section class="panel codewrap">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="rl">ReportLab</button>
+      <button class="tab" role="tab" data-tab="fp">fpdf2</button>
+      <button class="tab" role="tab" data-tab="xy">Coordinates</button>
+      <button class="btn" id="copy"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="1"/><path d="M3 11V3a1 1 0 011-1h7"/></svg><span>Copy code</span></button>
+    </div>
+    <div id="codebody" class="codebody"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+const PT = 25.4 / 72;          // mm per point
+const LH = 1.2, ASC = 0.85;    // line height and first-baseline offset, in font sizes
+const PX100 = 96 / 25.4;       // px per mm at 100 %
+const FONTS = {
+  Helvetica:{css:"Helvetica, Arial, sans-serif", rl:["Helvetica","Helvetica-Bold"], fp:"Helvetica"},
+  Times:{css:"'Times New Roman', Times, serif", rl:["Times-Roman","Times-Bold"], fp:"Times"},
+  Courier:{css:"'Courier New', Courier, monospace", rl:["Courier","Courier-Bold"], fp:"Courier"}
+};
+const DEF = {
+  text:{w:60,h:0,text:'New text',size:10,font:'Helvetica',bold:false,align:'L',color:'#000000'},
+  box:{w:50,h:25,lw:0.75,radius:0,color:'#000000',fillOn:false,fill:'#e6ebe8',dash:false},
+  line:{w:60,h:0,orient:'h',lw:0.75,color:'#000000',dash:false},
+  table:{w:170,h:80,headers:'Item\nDescription\nQty\nPrice\nTotal',cols:'20, 70, 15, 30, 35',headerH:7,rows:4,size:8,font:'Helvetica',bold:true,lw:0.5,color:'#000000'},
+  image:{w:40,h:20,src:'logo.png'},
+  qr:{w:20,h:20,data:'https://example.com'}
+};
+const TAG = {text:'text',box:'box',line:'line',table:'table',image:'img',qr:'qr'};
+
+const $ = id => document.getElementById(id);
+const svg=$('svg'), gStatic=$('gStatic'), gEls=$('gEls'), gOvl=$('gOvl'), gCur=$('gCur');
+const stage=$('stage'), listEl=$('list'), propsEl=$('props'), codeEl=$('codebody');
+
+let S = {orient:'P', snap:1, grid:true, margin:10, zoom:'fit', tab:'rl', els:[]};
+let sel=null, uid=1, ppm=3, drag=null, undoStack=[], last='', codeQueued=false;
+
+const pw = () => S.orient==='P' ? 210 : 297;
+const ph = () => S.orient==='P' ? 297 : 210;
+const r2 = n => Math.round(n*100)/100;
+const r3 = n => Math.round(n*1000)/1000;
+const fm = n => { const v=r2(n); return Number.isInteger(v) ? v.toFixed(1) : String(v); };
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const py = s => JSON.stringify(String(s));
+const byId = id => S.els.find(e => e.id===id);
+const oneLine = s => String(s).replace(/[\r\n]+/g,' ');
+const rgb = h => { const m=/^#?([0-9a-f]{6})$/i.exec(h||''); const n=m?parseInt(m[1],16):0; return `${n>>16&255}, ${n>>8&255}, ${n&255}`; };
+
+function geom(el){
+  if (el.type==='text') el.h = r2(String(el.text).split('\n').length * LH * el.size * PT);
+  return {x:el.x, y:el.y, w:el.w, h:el.h};
+}
+function tcols(el){
+  let wts = String(el.cols||'').split(/[,\s]+/).map(Number).filter(v => v>0);
+  const labels = String(el.headers||'').split('\n');
+  const n = Math.max(wts.length, labels.length, 1);
+  const avg = wts.length ? wts.reduce((a,b)=>a+b,0)/wts.length : 1;
+  while (wts.length < n) wts.push(avg);
+  const tot = wts.reduce((a,b)=>a+b,0);
+  let x = el.x;
+  return wts.map((v,i) => { const w=v/tot*el.w; const c={x, w, label:(labels[i]||'').trim()}; x+=w; return c; });
+}
+function rowLines(el){
+  const out=[]; const rows=Math.max(1,Math.round(el.rows||1)); const bh=(el.h-el.headerH)/rows;
+  for (let k=1;k<rows;k++) out.push(el.y+el.headerH+k*bh);
+  return out;
+}
+
+/* ---------- drawing on the sheet ---------- */
+function buildStatic(){
+  const W=pw(), H=ph(); let s='';
+  s += `<rect class="ruler" x="0" y="-9" width="${W}" height="8"/><rect class="ruler" x="-9" y="0" width="8" height="${H}"/><rect class="ruler" x="-9" y="-9" width="8" height="8"/>`;
+  s += `<text class="rlab" x="-8.2" y="-3.2">mm</text>`;
+  let t='';
+  for (let i=0;i<=W;i++){ const L=i%10===0?4:i%5===0?2.6:1.4; t+=`M${i} -1V${-1-L}`; if(i%10===0&&i>0) s+=`<text class="rlab" x="${i+0.5}" y="-6.4">${i}</text>`; }
+  for (let i=0;i<=H;i++){ const L=i%10===0?4:i%5===0?2.6:1.4; t+=`M-1 ${i}H${-1-L}`; if(i%10===0&&i>0) s+=`<text class="rlab" x="-8.6" y="${i+2.4}">${i}</text>`; }
+  s += `<path class="tick" d="${t}"/>`;
+  s += `<rect class="shadow" x="0.9" y="1.3" width="${W}" height="${H}"/><rect class="paper" x="0" y="0" width="${W}" height="${H}"/>`;
+  if (S.grid) s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#g10)"/>`;
+  if (S.margin>0) s += `<rect class="marg" x="${S.margin}" y="${S.margin}" width="${W-2*S.margin}" height="${H-2*S.margin}"/>`;
+  gStatic.innerHTML = s;
+  svg.setAttribute('viewBox', `-11 -11 ${W+17} ${H+17}`);
+}
+function qrPath(x,y,w,h,data){
+  const n=25, cw=w/n, ch=h/n; let s=2166136261;
+  for (const c of String(data)){ s^=c.charCodeAt(0); s=Math.imul(s,16777619); }
+  s|=1; const rnd=()=>{ s^=s<<13; s^=s>>>17; s^=s<<5; return ((s>>>0)%1000)/1000; };
+  let d=''; const sq=(r,c)=>{ d+=`M${r3(x+c*cw)} ${r3(y+r*ch)}h${r3(cw)}v${r3(ch)}h${r3(-cw)}z`; };
+  const fz=(r,c)=>(r<8&&c<8)||(r<8&&c>=n-8)||(r>=n-8&&c<8);
+  for (const [R,C] of [[0,0],[0,n-7],[n-7,0]])
+    for (let r=0;r<7;r++) for (let c=0;c<7;c++)
+      if (r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4)) sq(R+r,C+c);
+  for (let r=0;r<n;r++) for (let c=0;c<n;c++) if(!fz(r,c) && rnd()<0.47) sq(r,c);
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/><path d="${d}" fill="#000"/>`;
+}
+function elSVG(el){
+  const g=geom(el); let s='';
+  if (el.type==='text'){
+    const fs=el.size*PT, a={L:'start',C:'middle',R:'end'}[el.align]||'start';
+    const tx = el.align==='C' ? el.x+el.w/2 : el.align==='R' ? el.x+el.w : el.x;
+    s = `<text font-family="${esc(FONTS[el.font].css)}" font-size="${fs}" font-weight="${el.bold?700:400}" fill="${esc(el.color)}" text-anchor="${a}" style="white-space:pre" xml:space="preserve">` +
+      String(el.text).split('\n').map((ln,i)=>`<tspan x="${tx}" y="${el.y+(ASC+i*LH)*fs}">${esc(ln)}</tspan>`).join('') + `</text>`;
+  } else if (el.type==='box'){
+    const sw=el.lw>0?`stroke="${esc(el.color)}" stroke-width="${el.lw*PT}"`:'';
+    s = `<rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" rx="${el.radius||0}" fill="${el.fillOn?esc(el.fill):'none'}" ${sw} ${el.dash?'stroke-dasharray="1.06 0.71"':''}/>`;
+  } else if (el.type==='line'){
+    const x2=el.orient==='h'?el.x+el.w:el.x, y2=el.orient==='h'?el.y:el.y+el.h;
+    s = `<line x1="${el.x}" y1="${el.y}" x2="${x2}" y2="${y2}" stroke="${esc(el.color)}" stroke-width="${Math.max(el.lw,0.1)*PT}" ${el.dash?'stroke-dasharray="1.06 0.71"':''}/>`;
+  } else if (el.type==='table'){
+    const st=`stroke="${esc(el.color)}" stroke-width="${el.lw*PT}"`, cols=tcols(el), fs=el.size*PT;
+    s = `<rect x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}" fill="none" ${st}/>`;
+    let d=`M${el.x} ${el.y+el.headerH}H${el.x+el.w}`;
+    rowLines(el).forEach(y=>{ d+=`M${el.x} ${y}H${el.x+el.w}`; });
+    cols.slice(1).forEach(c=>{ d+=`M${c.x} ${el.y}V${el.y+el.h}`; });
+    s += `<path d="${d}" fill="none" ${st}/>`;
+    const hb = el.y+el.headerH/2+0.35*fs;
+    s += `<g font-family="${esc(FONTS[el.font].css)}" font-size="${fs}" font-weight="${el.bold?700:400}" fill="${esc(el.color)}">` +
+      cols.filter(c=>c.label).map(c=>`<text x="${c.x+1.5}" y="${hb}">${esc(c.label)}</text>`).join('') + `</g>`;
+  } else if (el.type==='image'){
+    const fs=Math.min(3, el.h/4, el.w/10);
+    s = `<rect class="ph" x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}"/><path class="phx" d="M${el.x} ${el.y}L${el.x+el.w} ${el.y+el.h}M${el.x+el.w} ${el.y}L${el.x} ${el.y+el.h}"/>` +
+      `<text class="phl" x="${el.x+el.w/2}" y="${el.y+el.h/2+fs*0.35}" font-size="${fs}" text-anchor="middle">${esc(el.src)}</text>`;
+  } else if (el.type==='qr'){
+    s = qrPath(el.x,el.y,el.w,el.h,el.data);
+  }
+  const p = (g.w<2||g.h<2) ? 1.4 : 0;
+  return `<g class="el" data-id="${el.id}">${s}<rect class="hit" x="${g.x-p}" y="${g.y-p}" width="${g.w+2*p}" height="${g.h+2*p}"/></g>`;
+}
+function handlesFor(el){
+  if (el.type==='text') return ['w','e'];
+  if (el.type==='line') return el.orient==='h' ? ['w','e'] : ['n','s'];
+  return ['nw','n','ne','e','se','s','sw','w'];
+}
+const CUR = {nw:'nwse-resize',se:'nwse-resize',ne:'nesw-resize',sw:'nesw-resize',n:'ns-resize',s:'ns-resize',e:'ew-resize',w:'ew-resize'};
+function renderOverlay(){
+  const el=byId(sel); if(!el){ gOvl.innerHTML=''; return; }
+  const g=geom(el), u=1/ppm, hs=8*u;
+  let s=`<rect class="selr" x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" pointer-events="none"/>`;
+  const pos = {nw:[g.x,g.y],n:[g.x+g.w/2,g.y],ne:[g.x+g.w,g.y],e:[g.x+g.w,g.y+g.h/2],se:[g.x+g.w,g.y+g.h],s:[g.x+g.w/2,g.y+g.h],sw:[g.x,g.y+g.h],w:[g.x,g.y+g.h/2]};
+  for (const h of handlesFor(el)){ const [x,y]=pos[h]; s+=`<rect class="hdl" data-handle="${h}" x="${x-hs/2}" y="${y-hs/2}" width="${hs}" height="${hs}" style="cursor:${CUR[h]}"/>`; }
+  const label = `${fm(g.x)}, ${fm(g.y)} mm  ·  ${fm(g.w)} × ${fm(g.h)}`;
+  const fs=11*u, lw=label.length*fs*0.62+10*u, lh=fs*1.7;
+  let ly = g.y - lh - 6*u; if (ly < -10) ly = g.y + g.h + 6*u;
+  s += `<g pointer-events="none"><rect class="dimbg" x="${g.x}" y="${ly}" width="${lw}" height="${lh}" rx="${3*u}"/><text class="dim" x="${g.x+5*u}" y="${ly+lh*0.68}" font-size="${fs}" style="white-space:pre">${esc(label)}</text></g>`;
+  gOvl.innerHTML = s;
+}
+function renderPaper(){ gEls.innerHTML = S.els.map(elSVG).join(''); renderOverlay(); }
+
+/* ---------- side panel ---------- */
+function renderList(){
+  $('count').textContent = S.els.length;
+  if (!S.els.length){ listEl.innerHTML = `<p class="empty" style="padding:4px 8px">Nothing on the page yet. Use the Add buttons above.</p>`; return; }
+  listEl.innerHTML = S.els.map(el => `<button class="item${el.id===sel?' on':''}" data-sel="${el.id}"><span class="tag">${TAG[el.type]}</span><span class="nm">${esc(el.name)}</span><span class="xy">${fm(el.x)}, ${fm(el.y)}</span></button>`).join('');
+}
+const fNum=(k,l,v,step=0.5,extra='')=>`<label class="f"><span>${l}</span><input type="number" id="p-${k}" data-k="${k}" step="${step}" value="${r2(v)}" ${extra}></label>`;
+const fTxt=(k,l,v,wide=true)=>`<label class="f${wide?' wide':''}"><span>${l}</span><input type="text" id="p-${k}" data-k="${k}" value="${esc(v)}"></label>`;
+const fArea=(k,l,v)=>`<label class="f wide"><span>${l}</span><textarea id="p-${k}" data-k="${k}" rows="4" spellcheck="false">${esc(v)}</textarea></label>`;
+const fSel=(k,l,v,opts)=>`<label class="f"><span>${l}</span><select id="p-${k}" data-k="${k}">${opts.map(([a,b])=>`<option value="${a}"${a===v?' selected':''}>${b}</option>`).join('')}</select></label>`;
+const fChk=(k,l,v)=>`<label class="f chk"><input type="checkbox" id="p-${k}" data-k="${k}"${v?' checked':''}>${l}</label>`;
+const fCol=(k,l,v)=>`<label class="f"><span>${l}</span><input type="color" id="p-${k}" data-k="${k}" value="${esc(v)}"></label>`;
+const fontOpts=[['Helvetica','Helvetica'],['Times','Times'],['Courier','Courier']];
+
+function renderProps(){
+  const el=byId(sel);
+  if (!el){ propsEl.innerHTML = `<p class="empty">Select an element on the page or in the list to edit its position, size and content. Every value is in millimetres from the top-left corner of the sheet.</p>`; return; }
+  const g=geom(el); let h='<div class="fields">';
+  h += fTxt('name','Name',el.name);
+  h += fNum('x','X from left',g.x) + fNum('y','Y from top',g.y);
+  if (el.type==='text') h += fNum('w','Width',g.w) + fNum('h','Height (auto)',g.h,0.5,'readonly tabindex="-1"');
+  else if (el.type==='line') h += el.orient==='h' ? fNum('w','Length',g.w) : fNum('h','Length',g.h);
+  else h += fNum('w','Width',g.w) + fNum('h','Height',g.h);
+  if (el.type==='text'){
+    h += `<div class="sub">Text</div>` + fArea('text','Content (Enter = new line)',el.text);
+    h += fSel('font','Font',el.font,fontOpts) + fNum('size','Size (pt)',el.size,0.5);
+    h += fSel('align','Align',el.align,[['L','Left'],['C','Centre'],['R','Right']]) + fCol('color','Colour',el.color) + fChk('bold','Bold',el.bold);
+  } else if (el.type==='box'){
+    h += `<div class="sub">Box</div>` + fNum('lw','Border (pt)',el.lw,0.25) + fNum('radius','Corner radius',el.radius||0,0.5);
+    h += fCol('color','Border colour',el.color) + fCol('fill','Fill colour',el.fill) + fChk('fillOn','Fill',el.fillOn) + fChk('dash','Dashed',el.dash);
+  } else if (el.type==='line'){
+    h += `<div class="sub">Line</div>` + fSel('orient','Direction',el.orient,[['h','Horizontal'],['v','Vertical']]) + fNum('lw','Thickness (pt)',el.lw,0.25) + fCol('color','Colour',el.color) + fChk('dash','Dashed',el.dash);
+  } else if (el.type==='table'){
+    h += `<div class="sub">Table</div>` + fArea('headers','Column headers, one per line',el.headers);
+    h += fTxt('cols','Column widths (relative, comma-separated)',el.cols);
+    h += fNum('headerH','Header height',el.headerH) + fNum('rows','Body rows',el.rows,1,'min="1"');
+    h += fSel('font','Font',el.font,fontOpts) + fNum('size','Size (pt)',el.size,0.5) + fNum('lw','Line (pt)',el.lw,0.25) + fCol('color','Colour',el.color) + fChk('bold','Bold header',el.bold);
+  } else if (el.type==='image'){
+    h += `<div class="sub">Image</div>` + fTxt('src','Image file path',el.src);
+  } else if (el.type==='qr'){
+    h += `<div class="sub">QR code</div>` + fTxt('data','QR content',el.data);
+  }
+  h += '</div><div class="readout" id="readout"></div>';
+  h += `<div class="acts"><button class="btn" data-act="dup">Duplicate</button><button class="btn" data-act="front">To front</button><button class="btn" data-act="back">To back</button><button class="btn warn" data-act="del">Delete</button></div>`;
+  propsEl.innerHTML = h; syncGeom();
+}
+function syncGeom(){
+  const el=byId(sel); if(!el) return; const g=geom(el);
+  for (const k of ['x','y','w','h']){ const i=$('p-'+k); if(i && document.activeElement!==i) i.value=r2(g[k]); }
+  const ro=$('readout'); if(!ro) return; const H=ph();
+  ro.innerHTML = `top-left  <b>${fm(g.x)}, ${fm(g.y)}</b> mm<br>bottom-right <b>${fm(g.x+g.w)}, ${fm(g.y+g.h)}</b> mm<br>ReportLab x, y <b>${fm(g.x/PT)}, ${fm((H-g.y-g.h)/PT)}</b> pt<br><span style="opacity:.8">(ReportLab y is measured up from the bottom edge)</span>`;
+}
+
+/* ---------- Python generators ---------- */
+function genRL(){
+  const W=pw(), H=ph(), L=S.orient==='L', body=[], need=new Set();
+  const cur={font:'',size:-1,fill:'#000000',stroke:'#000000',lw:1,dash:false};
+  const P=s=>body.push(s);
+  const setFont=(f,b,sz)=>{ const n=FONTS[f].rl[b?1:0]; if(cur.font!==n||cur.size!==sz){ P(`c.setFont("${n}", ${r2(sz)})`); cur.font=n; cur.size=sz; } };
+  const setFill=h=>{ h=String(h).toLowerCase(); if(cur.fill!==h){ P(`c.setFillColor(HexColor("${h}"))`); cur.fill=h; need.add('color'); } };
+  const setStroke=h=>{ h=String(h).toLowerCase(); if(cur.stroke!==h){ P(`c.setStrokeColor(HexColor("${h}"))`); cur.stroke=h; need.add('color'); } };
+  const setLW=v=>{ if(cur.lw!==v){ P(`c.setLineWidth(${r2(v)})`); cur.lw=v; } };
+  const setDash=d=>{ d=!!d; if(cur.dash!==d){ P(d?'c.setDash(3, 2)':'c.setDash()'); cur.dash=d; } };
+  const X=v=>`${fm(v)}*mm`, B=v=>`${fm(H-v)}*mm`;
+  const str=(a,x,w,by,s)=>{ if(a==='C') P(`c.drawCentredString(${X(x+w/2)}, ${by}, ${py(s)})`); else if(a==='R') P(`c.drawRightString(${X(x+w)}, ${by}, ${py(s)})`); else P(`c.drawString(${X(x)}, ${by}, ${py(s)})`); };
+  for (const el of S.els){
+    const g=geom(el);
+    P(`# ${oneLine(el.name)} — ${el.type}, top-left (${fm(g.x)}, ${fm(g.y)}) mm, ${fm(g.w)} × ${fm(g.h)} mm`);
+    if (el.type==='text'){
+      const fs=el.size*PT; setFont(el.font,el.bold,el.size); setFill(el.color);
+      String(el.text).split('\n').forEach((ln,i)=>{ if(ln.trim()) str(el.align,el.x,el.w,B(el.y+(ASC+i*LH)*fs),ln); });
+    } else if (el.type==='box'){
+      const st=el.lw>0, fl=!!el.fillOn;
+      if(st){ setStroke(el.color); setLW(el.lw); setDash(el.dash); } if(fl) setFill(el.fill);
+      if (el.radius>0) P(`c.roundRect(${X(el.x)}, ${B(el.y+el.h)}, ${X(el.w)}, ${X(el.h)}, ${X(el.radius)}, stroke=${st?1:0}, fill=${fl?1:0})`);
+      else P(`c.rect(${X(el.x)}, ${B(el.y+el.h)}, ${X(el.w)}, ${X(el.h)}, stroke=${st?1:0}, fill=${fl?1:0})`);
+    } else if (el.type==='line'){
+      setStroke(el.color); setLW(el.lw); setDash(el.dash);
+      if (el.orient==='h') P(`c.line(${X(el.x)}, ${B(el.y)}, ${X(el.x+el.w)}, ${B(el.y)})`);
+      else P(`c.line(${X(el.x)}, ${B(el.y)}, ${X(el.x)}, ${B(el.y+el.h)})`);
+    } else if (el.type==='table'){
+      const cols=tcols(el), fs=el.size*PT;
+      setStroke(el.color); setLW(el.lw); setDash(false);
+      P(`c.rect(${X(el.x)}, ${B(el.y+el.h)}, ${X(el.w)}, ${X(el.h)}, stroke=1, fill=0)`);
+      P(`c.line(${X(el.x)}, ${B(el.y+el.headerH)}, ${X(el.x+el.w)}, ${B(el.y+el.headerH)})  # under the header`);
+      const rl=rowLines(el);
+      if (rl.length){ P(`for ry in [${rl.map(y=>fm(H-y)).join(', ')}]:  # row dividers`); P(`    c.line(${X(el.x)}, ry*mm, ${X(el.x+el.w)}, ry*mm)`); }
+      const cx=cols.slice(1).map(c=>fm(c.x));
+      if (cx.length){ P(`for cx in [${cx.join(', ')}]:  # column dividers`); P(`    c.line(cx*mm, ${B(el.y)}, cx*mm, ${B(el.y+el.h)})`); }
+      const lab=cols.filter(c=>c.label);
+      if (lab.length){
+        setFont(el.font,el.bold,el.size); setFill(el.color);
+        P('for cx, label in ['); lab.forEach(c=>P(`    (${fm(c.x+1.5)}, ${py(c.label)}),`)); P(']:');
+        P(`    c.drawString(cx*mm, ${B(el.y+el.headerH/2+0.35*fs)}, label)`);
+      }
+    } else if (el.type==='image'){
+      need.add('os');
+      P(`if os.path.exists(${py(el.src)}):  # put the image file next to this script`);
+      P(`    c.drawImage(${py(el.src)}, ${X(el.x)}, ${B(el.y+el.h)}, width=${X(el.w)}, height=${X(el.h)}, preserveAspectRatio=True, mask="auto")`);
+      P('else:  # placeholder frame until the file exists');
+      P(`    c.rect(${X(el.x)}, ${B(el.y+el.h)}, ${X(el.w)}, ${X(el.h)}, stroke=1, fill=0)`);
+    } else if (el.type==='qr'){
+      need.add('qr');
+      P(`qr_w = qr.QrCodeWidget(${py(el.data)})`);
+      P('x0, y0, x1, y1 = qr_w.getBounds()');
+      P(`d = Drawing(${X(el.w)}, ${X(el.h)}, transform=[${X(el.w)} / (x1 - x0), 0, 0, ${X(el.h)} / (y1 - y0), 0, 0])`);
+      P('d.add(qr_w)');
+      P(`renderPDF.draw(d, c, ${X(el.x)}, ${B(el.y+el.h)})`);
+    }
+    P('');
+  }
+  const head=[
+    `# A4 ${L?'landscape':'portrait'} layout (${W} × ${H} mm), generated by A4 Placement Studio`,
+    '# pip install reportlab',
+    '# ReportLab puts (0, 0) at the BOTTOM-left corner, so every y value below',
+    `# is already converted: y = ${H} − (distance from the top edge in mm).`,
+    ''];
+  if (need.has('os')) head.push('import os');
+  head.push(
+    `from reportlab.lib.pagesizes import A4${L?', landscape':''}`,
+    'from reportlab.lib.units import mm',
+    'from reportlab.pdfgen import canvas');
+  if (need.has('color')) head.push('from reportlab.lib.colors import HexColor');
+  if (need.has('qr')) head.push('from reportlab.graphics.barcode import qr','from reportlab.graphics.shapes import Drawing','from reportlab.graphics import renderPDF');
+  head.push('', `c = canvas.Canvas("output.pdf", pagesize=${L?'landscape(A4)':'A4'})`, '');
+  return head.concat(body, ['c.showPage()','c.save()','print("Saved output.pdf")']).join('\n');
+}
+function genFP(){
+  const W=pw(), H=ph(), L=S.orient==='L', body=[]; let helper=false, qrc=false, fpos=false;
+  const cur={font:'',text:'#000000',draw:'#000000',fill:'#000000',lw:-1,dash:false};
+  const P=s=>body.push(s);
+  const setFont=(f,b,sz)=>{ const k=`${f}|${b}|${sz}`; if(cur.font!==k){ P(`pdf.set_font("${FONTS[f].fp}", "${b?'B':''}", ${r2(sz)})`); cur.font=k; } };
+  const setText=h=>{ h=String(h).toLowerCase(); if(cur.text!==h){ P(`pdf.set_text_color(${rgb(h)})`); cur.text=h; } };
+  const setDraw=h=>{ h=String(h).toLowerCase(); if(cur.draw!==h){ P(`pdf.set_draw_color(${rgb(h)})`); cur.draw=h; } };
+  const setFill=h=>{ h=String(h).toLowerCase(); if(cur.fill!==h){ P(`pdf.set_fill_color(${rgb(h)})`); cur.fill=h; } };
+  const setLW=v=>{ if(cur.lw!==v){ P(`pdf.set_line_width(${r3(v*PT)})  # ${r2(v)} pt`); cur.lw=v; } };
+  const setDash=d=>{ d=!!d; if(cur.dash!==d){ P(d?'pdf.set_dash_pattern(dash=1.06, gap=0.71)':'pdf.set_dash_pattern()'); cur.dash=d; } };
+  for (const el of S.els){
+    const g=geom(el);
+    P(`# ${oneLine(el.name)} — ${el.type}, top-left (${fm(g.x)}, ${fm(g.y)}) mm, ${fm(g.w)} × ${fm(g.h)} mm`);
+    if (el.type==='text'){
+      const fs=el.size*PT; setFont(el.font,el.bold,el.size); setText(el.color);
+      String(el.text).split('\n').forEach((ln,i)=>{
+        if(!ln.trim()) return; const by=fm(el.y+(ASC+i*LH)*fs);
+        if (el.align==='L') P(`pdf.text(${fm(el.x)}, ${by}, ${py(ln)})`);
+        else { helper=true; P(`text_at(${fm(el.x)}, ${by}, ${fm(el.w)}, ${py(ln)}, "${el.align}")`); }
+      });
+    } else if (el.type==='box'){
+      const st=el.lw>0, fl=!!el.fillOn; if(!st&&!fl){ P('# (no border and no fill, nothing to draw)'); P(''); continue; }
+      if(st){ setDraw(el.color); setLW(el.lw); setDash(el.dash); } if(fl) setFill(el.fill);
+      const style=st&&fl?'DF':fl?'F':'D';
+      P(`pdf.rect(${fm(el.x)}, ${fm(el.y)}, ${fm(el.w)}, ${fm(el.h)}, style="${style}"${el.radius>0?`, round_corners=True, corner_radius=${fm(el.radius)}`:''})`);
+    } else if (el.type==='line'){
+      setDraw(el.color); setLW(el.lw); setDash(el.dash);
+      if (el.orient==='h') P(`pdf.line(${fm(el.x)}, ${fm(el.y)}, ${fm(el.x+el.w)}, ${fm(el.y)})`);
+      else P(`pdf.line(${fm(el.x)}, ${fm(el.y)}, ${fm(el.x)}, ${fm(el.y+el.h)})`);
+    } else if (el.type==='table'){
+      const cols=tcols(el), fs=el.size*PT;
+      setDraw(el.color); setLW(el.lw); setDash(false);
+      P(`pdf.rect(${fm(el.x)}, ${fm(el.y)}, ${fm(el.w)}, ${fm(el.h)}, style="D")`);
+      P(`pdf.line(${fm(el.x)}, ${fm(el.y+el.headerH)}, ${fm(el.x+el.w)}, ${fm(el.y+el.headerH)})  # under the header`);
+      const rl=rowLines(el);
+      if (rl.length){ P(`for ry in [${rl.map(fm).join(', ')}]:  # row dividers`); P(`    pdf.line(${fm(el.x)}, ry, ${fm(el.x+el.w)}, ry)`); }
+      const cx=cols.slice(1).map(c=>fm(c.x));
+      if (cx.length){ P(`for cx in [${cx.join(', ')}]:  # column dividers`); P(`    pdf.line(cx, ${fm(el.y)}, cx, ${fm(el.y+el.h)})`); }
+      const lab=cols.filter(c=>c.label);
+      if (lab.length){
+        setFont(el.font,el.bold,el.size); setText(el.color);
+        P('for cx, label in ['); lab.forEach(c=>P(`    (${fm(c.x+1.5)}, ${py(c.label)}),`)); P(']:');
+        P(`    pdf.text(cx, ${fm(el.y+el.headerH/2+0.35*fs)}, label)`);
+      }
+    } else if (el.type==='image'){
+      fpos=true;
+      P(`if os.path.exists(${py(el.src)}):  # put the image file next to this script`);
+      P(`    pdf.image(${py(el.src)}, x=${fm(el.x)}, y=${fm(el.y)}, w=${fm(el.w)}, h=${fm(el.h)})`);
+      P('else:  # placeholder frame until the file exists');
+      P(`    pdf.rect(${fm(el.x)}, ${fm(el.y)}, ${fm(el.w)}, ${fm(el.h)}, style="D")`);
+    } else if (el.type==='qr'){
+      qrc=true; P(`pdf.image(qrcode.make(${py(el.data)}).get_image(), x=${fm(el.x)}, y=${fm(el.y)}, w=${fm(el.w)}, h=${fm(el.h)})`);
+    }
+    P('');
+  }
+  const head=[
+    `# A4 ${L?'landscape':'portrait'} layout (${W} × ${H} mm), generated by A4 Placement Studio`,
+    `# pip install fpdf2${qrc?' "qrcode[pil]"':''}`,
+    '# fpdf2 measures in mm from the TOP-left corner, exactly like the editor.',
+    '# Text y values are baselines (the line the letters sit on).',
+    '',
+    ''];
+  if (fpos) head.push('import os');
+  head.push('from fpdf import FPDF');
+  if (qrc) head.push('import qrcode');
+  head.push('', `pdf = FPDF(orientation="${S.orient}", unit="mm", format="A4")`, 'pdf.set_auto_page_break(False)', 'pdf.add_page()', '');
+  if (helper) head.push(
+    'def text_at(x, y, w, s, align):',
+    '    """Write s on baseline y, aligned inside the box that starts at x and is w wide."""',
+    '    sw = pdf.get_string_width(s)',
+    '    if align == "C":',
+    '        x += (w - sw) / 2',
+    '    elif align == "R":',
+    '        x += w - sw',
+    '    pdf.text(x, y, s)',
+    '', '');
+  return head.concat(body, ['pdf.output("output.pdf")','print("Saved output.pdf")']).join('\n');
+}
+function hl(src){
+  const re=/(#[^\n]*)|("(?:[^"\\\n]|\\.)*")|\b(from|import|def|for|in|if|elif|else|return|True|False|None)\b|(\b\d+(?:\.\d+)?\b)/g;
+  let out='', i=0, m;
+  while ((m=re.exec(src))){ out+=esc(src.slice(i,m.index)); const c=m[1]?'c':m[2]?'s':m[3]?'k':'n'; out+=`<span class="t-${c}">${esc(m[0])}</span>`; i=re.lastIndex; }
+  return out+esc(src.slice(i));
+}
+const layoutJSON = () => JSON.stringify({orient:S.orient, elements:S.els.map(({id,...r})=>r)}, null, 2);
+
+function buildXY(){
+  codeEl.className='codebody xy';
+  codeEl.innerHTML = `<div class="xyt" id="xyt"></div>
+    <p class="note">Editor values are millimetres from the top-left corner (fpdf2 uses the same). ReportLab columns are points from the bottom-left corner, ready for <code>c.drawString(x, y, …)</code> without <code>*mm</code>.</p>
+    <label class="f wide"><span>Layout JSON — paste one here to restore a saved layout</span></label>
+    <textarea id="json" spellcheck="false"></textarea>
+    <div class="row"><button class="btn" id="jload">Load this JSON</button><span id="jmsg"></span></div>`;
+  $('jload').onclick = loadJSON;
+  fillXY(true);
+}
+function fillXY(force){
+  const t=$('xyt'); if(!t) return; const H=ph();
+  t.innerHTML = `<table><thead><tr><th>Element</th><th>X mm</th><th>Y mm</th><th>W mm</th><th>H mm</th><th>RL x pt</th><th>RL y pt</th></tr></thead><tbody>` +
+    S.els.map(el=>{ const g=geom(el); return `<tr data-sel="${el.id}"${el.id===sel?' class="on"':''}><td>${esc(el.name)}</td><td>${fm(g.x)}</td><td>${fm(g.y)}</td><td>${fm(g.w)}</td><td>${fm(g.h)}</td><td>${fm(g.x/PT)}</td><td>${fm((H-g.y-g.h)/PT)}</td></tr>`; }).join('') + `</tbody></table>`;
+  const j=$('json'); if (j && (force || document.activeElement!==j)) j.value = layoutJSON();
+}
+function renderCode(){
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===S.tab)));
+  document.querySelector('#copy span').textContent = S.tab==='xy' ? 'Copy JSON' : 'Copy code';
+  if (S.tab==='xy'){ if(!$('xyt')) buildXY(); else fillXY(false); return; }
+  codeEl.className='codebody';
+  codeEl.innerHTML = `<pre><code>${hl(S.tab==='rl'?genRL():genFP())}</code></pre>`;
+}
+function scheduleCode(){ if(codeQueued) return; codeQueued=true; requestAnimationFrame(()=>{ codeQueued=false; renderCode(); }); }
+
+/* ---------- state ---------- */
+const snapStr = () => JSON.stringify({orient:S.orient, els:S.els});
+function save(){ try{ localStorage.setItem('a4ps-v1', JSON.stringify(S)); }catch(e){} }
+function commit(){ const c=snapStr(); if(c!==last){ undoStack.push(last); if(undoStack.length>100) undoStack.shift(); last=c; } save(); }
+function renderAll(){ renderPaper(); renderList(); renderProps(); renderCode(); }
+function syncControls(){ $('orient').value=S.orient; $('margin').value=String(S.margin); $('snap').value=String(S.snap); $('grid').checked=!!S.grid; }
+function doUndo(){
+  if(!undoStack.length) return; const prev=undoStack.pop(); last=prev;
+  const d=JSON.parse(prev); S.orient=d.orient; S.els=d.els; if(!byId(sel)) sel=null;
+  syncControls(); buildStatic(); applyZoom(); renderAll(); save();
+}
+function normalise(o){ const base=DEF[o.type]; if(!base) return null; const el={...base,...o,id:uid++}; for(const k of ['x','y','w','h']) el[k]=Number(el[k])||0; if(!el.name) el.name=o.type; return el; }
+
+function sample(){
+  const T='Times';
+  const c=[18,37.81,113.89,124.31,144.12,153.5,163.92];
+  return [
+    {type:'text',name:'Company name',x:15,y:11,w:180,text:'ZALONGWA TECHNOLOGIES LIMITED',size:17,font:T,align:'C'},
+    {type:'text',name:'Document title',x:80,y:20,w:50,text:'TAX INVOICE',size:10,font:T,align:'C'},
+    {type:'text',name:'Contact block',x:20,y:24,w:60,text:'Phone:0784313200\nEmail: support@zalongwa.co.tz\nOffice: Ngome House, Floor No.6 /\n           www.zalongwa.co.tz',size:8,font:T},
+    {type:'image',name:'Logo',x:82,y:27,w:46,h:12,src:'zalongwa_logo.png'},
+    {type:'text',name:'Company address',x:150,y:26,w:42,text:'P. O. Box  70893,\nDar es Salaam,\nTanzania.\nTIN : 104-824-986',size:8,font:T},
+    {type:'line',name:'Header rule',x:20,y:41,w:172,h:0,orient:'h',lw:0.5},
+    {type:'text',name:'Customer block',x:20,y:42.5,w:90,text:'INVOICED TO:\n     Owner,\n     Issa Levy Lupembe,\n     P.O.Box 72960 , Dar es Salaam, , .',size:8,font:T},
+    {type:'text',name:'Customer ID',x:18,y:56.5,w:70,text:'ID Name: TIN,   ID Number: 107214984',size:6,font:T},
+    {type:'text',name:'Invoice details',x:150,y:42.5,w:42,text:'INVOICE\nNumber :  1401\nDate : 2026-10-12\nTime  : 09:40:28',size:8,font:T},
+    {type:'text',name:'Due date',x:150,y:56.5,w:42,text:'Due Date: 20/11/2026',size:6,font:T},
+    {type:'table',name:'Items table',x:18,y:60,w:172,h:164,headers:'Item Code\nItem Description\nQty\nPrice (TZS)\nTAX\nUoM\nTotal Tax Inc.',cols:'19, 73, 10, 19, 9, 10, 25',headerH:6,rows:1,size:6.5,font:T,bold:false,lw:0.5},
+    {type:'text',name:'Item code',x:c[0]+1.5,y:68,w:17,text:'ZTL2028',size:7,font:T},
+    {type:'text',name:'Item description',x:c[1]+1.5,y:68,w:73,text:'WebSHOP Virtual EFD Machine\n\nBeing charged for Virtual EFD Machine registration,\nInstallation and configuration, Server Hosting,\nSupport and Maintenance for the period of one year\n(October 2026 to September 2027)',size:7,font:T},
+    {type:'text',name:'Qty',x:c[2],y:68,w:10.4,text:'1',size:7,font:T,align:'C'},
+    {type:'text',name:'Unit price',x:c[3],y:68,w:18.6,text:'55,000.00',size:7,font:T,align:'R'},
+    {type:'text',name:'Tax code',x:c[4],y:68,w:9.4,text:'E0%',size:7,font:T,align:'C'},
+    {type:'text',name:'UoM',x:c[5],y:68,w:10.4,text:'each',size:7,font:T,align:'C'},
+    {type:'text',name:'Line total',x:c[6],y:68,w:24.8,text:'55,000.00',size:7,font:T,align:'R'},
+    {type:'text',name:'Payment terms',x:19,y:225.5,w:100,text:'Payment Terms: 20th of the month following',size:6.5,font:T},
+    {type:'box',name:'Bank details frame',x:18,y:229,w:110,h:16,radius:3,lw:0.5},
+    {type:'text',name:'Bank details',x:20,y:230.5,w:106,text:'Bank information: NATIONAL MICROFINANCE BANK, AZIKIWE/JAMHURI STREET,\nP.O. BOX 9213, TEL: +255222161000, DAR ES SALAAM, TANZANIA.\nSWIFT CODE: NMIBTZTZ. Account Name: ZALONGWA TECHNOLOGIES LIMITED.\nAccount No.: 20406600357.',size:6.5,font:T},
+    {type:'box',name:'Totals frame',x:128,y:224,w:62,h:25,lw:0.5},
+    {type:'text',name:'Totals labels',x:130,y:225.5,w:30,text:'TOTAL EXCL. OF TAX:\nTOTAL DISCOUNT:\nTOTAL TAX:',size:7,font:T},
+    {type:'text',name:'Totals values',x:160,y:225.5,w:28,text:'55,000.00\n0.00\n0.00',size:7,font:T,align:'R'},
+    {type:'line',name:'Totals rule',x:128,y:241,w:62,h:0,orient:'h',lw:0.5},
+    {type:'text',name:'Total invoice label',x:130,y:243,w:30,text:'TOTAL INVOICE:',size:7,font:T},
+    {type:'text',name:'Total invoice value',x:160,y:243,w:28,text:'55,000.00',size:7,font:T,align:'R'},
+    {type:'text',name:'EFD verification',x:130,y:250.5,w:40,text:'VERIFICATION CODE:\n             E2436A1371\nEFD SERIAL NUMBER:',size:7,font:T},
+    {type:'qr',name:'Verification QR',x:172,y:250.5,w:16,h:16,data:'E2436A1371'}
+  ].map(normalise);
+}
+
+function addEl(kind){
+  const type = kind==='hline'||kind==='vline' ? 'line' : kind;
+  const label = {text:'Text',box:'Box',hline:'Horizontal line',vline:'Vertical line',table:'Table',image:'Image',qr:'QR code'}[kind];
+  const n = S.els.filter(e=>e.type===type).length+1;
+  const el = normalise({type, name:`${label} ${n}`, x:0, y:0, ...(kind==='vline'?{orient:'v',w:0,h:40}:{})});
+  const g=geom(el), off=(S.els.length%8)*4, base=Math.max(S.margin,10);
+  el.x = Math.min(base+off, pw()-g.w); el.y = Math.min(base+10+off, ph()-g.h);
+  S.els.push(el); sel=el.id; renderAll(); commit();
+}
+function act(a){
+  const el=byId(sel); if(!el) return; const i=S.els.indexOf(el);
+  if (a==='del'){ S.els.splice(i,1); sel=null; }
+  else if (a==='dup'){ const c=normalise({...el, name:el.name+' copy', x:el.x+5, y:el.y+5}); S.els.splice(i+1,0,c); sel=c.id; }
+  else if (a==='front'){ S.els.splice(i,1); S.els.push(el); }
+  else if (a==='back'){ S.els.splice(i,1); S.els.unshift(el); }
+  renderAll(); commit();
+}
+function loadJSON(){
+  const msg=$('jmsg');
+  try{
+    const d=JSON.parse($('json').value); const arr=Array.isArray(d)?d:d.elements;
+    if(!Array.isArray(arr)) throw new Error('missing "elements" list');
+    const els=arr.map(normalise).filter(Boolean);
+    if(d.orient==='L'||d.orient==='P') S.orient=d.orient;
+    S.els=els; sel=null; syncControls(); buildStatic(); applyZoom(); renderAll(); commit();
+    msg.textContent=`Loaded ${els.length} elements.`;
+  }catch(e){ msg.textContent=`Could not read that JSON: ${e.message}. Check it starts with { and has an "elements" list.`; }
+}
+
+/* ---------- zoom ---------- */
+function fitPPM(){ const W=pw()+17, H=ph()+17; return Math.max(0.5, Math.min((stage.clientWidth-24)/W, (stage.clientHeight-24)/H)); }
+function applyZoom(){
+  ppm = S.zoom==='fit' ? fitPPM() : S.zoom;
+  svg.style.width = (pw()+17)*ppm+'px'; svg.style.height = (ph()+17)*ppm+'px';
+  $('zlab').textContent = Math.round(ppm/PX100*100)+'%';
+  renderOverlay();
+}
+$('zin').onclick=()=>{ S.zoom=Math.min(14,ppm*1.25); applyZoom(); save(); };
+$('zout').onclick=()=>{ S.zoom=Math.max(0.6,ppm/1.25); applyZoom(); save(); };
+$('zfit').onclick=()=>{ S.zoom='fit'; applyZoom(); save(); };
+try{ new ResizeObserver(()=>{ if(S.zoom==='fit') applyZoom(); }).observe(stage); }catch(e){ window.addEventListener('resize',()=>{ if(S.zoom==='fit') applyZoom(); }); }
+
+/* ---------- pointer ---------- */
+function toMM(e){ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); return {x:p.x,y:p.y}; }
+const snapV = (v,free) => (!free && S.snap>0) ? r2(Math.round(v/S.snap)*S.snap) : r2(v);
+function select(id){ sel=id; renderPaper(); renderList(); renderProps(); if(S.tab==='xy') fillXY(false); }
+
+svg.addEventListener('pointerdown', e=>{
+  if (e.button!==0) return;
+  const p=toMM(e), hd=e.target.closest('[data-handle]');
+  if (hd && byId(sel)){ const el=byId(sel); drag={mode:'resize',h:hd.dataset.handle,el,o:{...geom(el)},p0:p}; }
+  else {
+    const g=e.target.closest('[data-id]');
+    if (!g){ if(sel!==null) select(null); return; }
+    const id=+g.dataset.id; if(id!==sel) select(id);
+    const el=byId(id); drag={mode:'move',el,o:{...geom(el)},p0:p};
+  }
+  svg.setPointerCapture(e.pointerId); e.preventDefault();
+});
+svg.addEventListener('pointermove', e=>{
+  const p=toMM(e), W=pw(), H=ph();
+  if (p.x>=0&&p.y>=0&&p.x<=W&&p.y<=H){
+    $('cursor').textContent = `X ${fm(p.x)}  Y ${fm(p.y)} mm   ·   ReportLab y ${fm(H-p.y)} mm`;
+    gCur.innerHTML = `<line class="curl" x1="${p.x}" y1="-9" x2="${p.x}" y2="-1"/><line class="curl" x1="-9" y1="${p.y}" x2="-1" y2="${p.y}"/>`;
+  } else gCur.innerHTML='';
+  if (!drag) return;
+  const dx=p.x-drag.p0.x, dy=p.y-drag.p0.y, o=drag.o, el=drag.el, free=e.altKey;
+  if (drag.mode==='move'){
+    el.x = Math.min(Math.max(snapV(o.x+dx,free),0), Math.max(0,W-o.w));
+    el.y = Math.min(Math.max(snapV(o.y+dy,free),0), Math.max(0,H-o.h));
+  } else {
+    const h=drag.h, R=o.x+o.w, Bt=o.y+o.h; let {x,y,w,h:hh}=o;
+    if (h.includes('e')) w = snapV(R+dx,free)-x;
+    if (h.includes('w')){ x=snapV(o.x+dx,free); w=R-x; }
+    if (h.includes('s')) hh = snapV(Bt+dy,free)-y;
+    if (h.includes('n')){ y=snapV(o.y+dy,free); hh=Bt-y; }
+    if (w<1){ if(h.includes('w')) x=R-1; w=1; }
+    if (hh<1){ if(h.includes('n')) y=Bt-1; hh=1; }
+    el.x=r2(x); el.y=r2(y);
+    if (el.type==='line'){ if(el.orient==='h') el.w=r2(w); else el.h=r2(hh); }
+    else { el.w=r2(w); if(el.type!=='text') el.h=r2(hh); }
+  }
+  renderPaper(); renderList(); syncGeom(); scheduleCode();
+});
+const endDrag=()=>{ if(!drag) return; drag=null; commit(); renderCode(); };
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+svg.addEventListener('pointerleave', ()=>{ if(!drag){ gCur.innerHTML=''; } });
+
+/* ---------- UI wiring ---------- */
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addEl(b.dataset.add));
+listEl.addEventListener('click', e=>{ const b=e.target.closest('[data-sel]'); if(b) select(+b.dataset.sel); });
+codeEl.addEventListener('click', e=>{ const r=e.target.closest('tr[data-sel]'); if(r) select(+r.dataset.sel); });
+propsEl.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(b) act(b.dataset.act); });
+function onProp(e){
+  const t=e.target, k=t.dataset&&t.dataset.k; if(!k) return; const el=byId(sel); if(!el) return;
+  let v; if(t.type==='checkbox') v=t.checked; else if(t.type==='number'){ v=parseFloat(t.value); if(!isFinite(v)) return; } else v=t.value;
+  if (['w','h','size','lw','headerH','radius'].includes(k)) v=Math.max(0,v);
+  if (k==='rows') v=Math.max(1,Math.round(v));
+  if (k==='h' && el.type==='text') return;
+  el[k]=v;
+  if (k==='orient'){ if(v==='v'){ el.h=el.w||40; el.w=0; } else { el.w=el.h||60; el.h=0; } renderProps(); }
+  renderPaper(); renderList(); syncGeom(); scheduleCode();
+}
+propsEl.addEventListener('input', onProp);
+propsEl.addEventListener('change', e=>{ onProp(e); commit(); });
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; codeEl.innerHTML=''; renderCode(); save(); });
+$('copy').onclick = async ()=>{
+  const txt = S.tab==='xy' ? layoutJSON() : (S.tab==='rl'?genRL():genFP());
+  const lab=document.querySelector('#copy span'), done=()=>{ lab.textContent='Copied'; setTimeout(()=>renderCode(),1400); };
+  try{ await navigator.clipboard.writeText(txt); done(); }
+  catch(err){ const node=codeEl.querySelector('pre')||$('json'); if(node){ const r=document.createRange(); r.selectNodeContents(node); const s=getSelection(); s.removeAllRanges(); s.addRange(r); } lab.textContent='Press Ctrl+C'; }
+};
+$('orient').onchange=e=>{ S.orient=e.target.value; buildStatic(); applyZoom(); renderAll(); commit(); };
+$('margin').onchange=e=>{ S.margin=+e.target.value; buildStatic(); save(); };
+$('snap').onchange=e=>{ S.snap=+e.target.value; save(); };
+$('grid').onchange=e=>{ S.grid=e.target.checked; buildStatic(); save(); };
+$('undo').onclick=doUndo;
+$('sample').onclick=()=>{ S.orient='P'; S.els=sample(); sel=null; syncControls(); buildStatic(); applyZoom(); renderAll(); commit(); };
+let armed=0; const clearBtn=$('clear');
+clearBtn.onclick=()=>{
+  if (Date.now()-armed<3000){ S.els=[]; sel=null; armed=0; clearBtn.textContent='Clear page'; clearBtn.classList.remove('warn'); renderAll(); commit(); return; }
+  armed=Date.now(); clearBtn.textContent='Click again to clear'; clearBtn.classList.add('warn');
+  setTimeout(()=>{ if(armed && Date.now()-armed>=2900){ armed=0; clearBtn.textContent='Clear page'; clearBtn.classList.remove('warn'); } },3000);
+};
+document.addEventListener('keydown', e=>{
+  const tag=(e.target.tagName||'').toLowerCase(); if(['input','textarea','select'].includes(tag)) return;
+  const mod=e.ctrlKey||e.metaKey;
+  if (mod && e.key.toLowerCase()==='z'){ e.preventDefault(); doUndo(); return; }
+  const el=byId(sel); if(!el) return;
+  if (mod && e.key.toLowerCase()==='d'){ e.preventDefault(); act('dup'); return; }
+  if (e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); act('del'); return; }
+  if (e.key==='Escape'){ select(null); return; }
+  const step = e.shiftKey ? 10 : (S.snap||0.5);
+  const d={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
+  if (!d) return; e.preventDefault();
+  el.x=r2(el.x+d[0]); el.y=r2(el.y+d[1]); renderPaper(); renderList(); syncGeom(); renderCode(); commit();
+});
+
+/* ---------- boot ---------- */
+try{
+  const d=JSON.parse(localStorage.getItem('a4ps-v1')||'null');
+  if (d && Array.isArray(d.els)){ Object.assign(S, d); S.els=d.els.map(normalise).filter(Boolean); }
+}catch(e){}
+if (!S.els.length) S.els=sample();
+if (!['rl','fp','xy'].includes(S.tab)) S.tab='rl';
+syncControls(); buildStatic(); applyZoom(); renderAll();
+last=snapStr();
+requestAnimationFrame(applyZoom);
+})();
+</script>
+
+</body></html>
